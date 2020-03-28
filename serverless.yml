@@ -1,0 +1,83 @@
+service: jeffbryner-com
+custom:
+  s3_bucket: ${file(config.${self:provider.stage}.yml):BUCKET_NAME}
+  s3_bucket_arn: arn:aws:s3:::${self:custom.s3_bucket}
+  pythonRequirements:
+    usePipenv: true
+    dockerizePip: true
+  wsgi:
+    app: app.app
+    packRequirements: false
+  apiCloudFront:
+    domain:
+      - ${file(config.${self:provider.stage}.yml):DOMAIN_NAME}
+      - www.${file(config.${self:provider.stage}.yml):DOMAIN_NAME}
+    certificate: ${file(config.${self:provider.stage}.yml):CERTIFICATE_ARN}
+    logging:
+      bucket: ${file(config.${self:provider.stage}.yml):BUCKET_NAME}-logs
+
+  apigwBinary:
+    types:
+      - '*/*'
+
+
+provider:
+  name: aws
+  runtime: python3.7
+  stage: ${opt:stage,'dev'}
+  region: us-west-2
+  environment:
+    ENVIRONMENT: ${self:provider.stage}
+    REGION: ${opt:region, self:provider.region}
+    CONFIGFILE: config.${self:provider.stage}.yml
+    BUCKET_NAME: ${file(config.${self:provider.stage}.yml):BUCKET_NAME}
+    LOGGING: "True"
+    SERVER_NAME: ${file(config.${self:provider.stage}.yml):SERVER_NAME}
+    PERMANENT_SESSION: "True"
+    PERMANENT_SESSION_LIFETIME: "900"
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - acm:ListCertificates
+      Resource: "*"
+    - Effect: Allow
+      Action:
+      - cloudfront:CreateDistribution
+      - cloudfront:GetDistribution
+      - cloudfront:UpdateDistribution
+      - cloudfront:DeleteDistribution
+      - cloudfront:TagResource
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - apigateway:POST
+      Resource: "arn:aws:apigateway:${self:provider.region}::/domainnames"
+    - Effect: Allow
+      Action:
+        - apigateway:GET
+        - apigateway:DELETE
+      Resource: "arn:aws:apigateway:${self:provider.region}::/domainnames/*"
+    - Effect: Allow
+      Action:
+        - apigateway:POST
+      Resource: "arn:aws:apigateway:${self:provider.region}::/domainnames/*"
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource:
+        - ${self:custom.s3_bucket_arn}/*
+
+functions:
+  app:
+    timeout: 30
+    handler: wsgi_handler.handler
+    events:
+      - http: ANY /
+      - http: ANY {proxy+}
+
+plugins:
+  - serverless-python-requirements
+  - serverless-wsgi
+  - serverless-api-cloudfront
+  - serverless-apigw-binary

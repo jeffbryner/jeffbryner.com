@@ -1,0 +1,6 @@
+DOMAIN_NAME: jeffbryner.com
+ZONE_ID: Z24AS5HVUUQ2K4
+CERTIFICATE_ARN: arn:aws:acm:us-east-1:717455710680:certificate/8c218fb3-3356-4e97-a7f5-3713c18b7bfe
+ENVIRONMENT: dev
+REGION: us-west-2
+BUCKET_NAME: 717455710680-jeffbryner.com-dev
