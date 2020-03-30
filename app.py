@@ -102,6 +102,20 @@ def s3_index():
     else:
         abort(404)
 
+@app.route("/vciso")
+@add_response_headers(headers=headers)
+def s3_vciso():
+    destination_file='vciso.html'
+    exists, mimetype=s3_file_exists(destination_file)
+    if exists:
+        file = client.get_object(Bucket=os.environ['BUCKET_NAME'], Key=destination_file)
+        return Response(
+            file['Body'].read(),
+            mimetype=mimetype
+        )
+    else:
+        abort(404)
+
 @app.route("/<path:filename>")
 @add_response_headers(headers=headers)
 def s3_file(filename):
