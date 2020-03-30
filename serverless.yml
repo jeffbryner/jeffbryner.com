@@ -14,7 +14,7 @@ custom:
       - www.${file(config.${self:provider.stage}.yml):DOMAIN_NAME}
     certificate: ${file(config.${self:provider.stage}.yml):CERTIFICATE_ARN}
     logging:
-      bucket: ${file(config.${self:provider.stage}.yml):BUCKET_NAME}-logs
+      bucket: ${file(config.${self:provider.stage}.yml):BUCKET_NAME}-logs.s3.amazonaws.com
 
   apigwBinary:
     types:
